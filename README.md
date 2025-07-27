@@ -12,7 +12,7 @@
 
 🔗 React frontend to interact with APIs (Create Index, Add Complaint, Smart Search, etc.)
 
-🧰 Technologies Used Backend: ASP.NET Core, C#, Elasticsearch, NEST client
+🧰 Technologies Used Backend: ASP.NET Core, C#, Elasticsearch, NEST client, Redis
 
 Frontend: React.js, Bootstrap (for UI)
 
