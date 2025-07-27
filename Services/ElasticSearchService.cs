@@ -1,4 +1,5 @@
 ﻿using Complaint_Analyzer_using_ES.Helpers;
+using Complaint_Analyzer_using_ES.ICache;
 using Nest;
 
 namespace ComplaintAnalyzer
@@ -7,13 +8,12 @@ namespace ComplaintAnalyzer
     {
         private readonly IElasticClient _client;
         private const string IndexName = "complaints";
-
         public ElasticSearchService(IElasticClient client)
         {
             _client = client;
         }
 
-
+        // Create the index.
         public async Task<string> CreateIndexAsync(string indexName)
         {
             ExistsResponse existsResponse = await _client.Indices.ExistsAsync(indexName);
@@ -35,7 +35,21 @@ namespace ComplaintAnalyzer
             return $"Index '{indexName}' created successfully.";
         }
 
+        // Get All Index Name
+        public async Task<List<string>> GetAllIndexNamesAsync()
+        {
+            var response = await _client.Cat.IndicesAsync(); // calls _cat/indices API
 
+            if (!response.IsValid)
+                throw new ApplicationException("Failed to retrieve indices.");
+
+            return response.Records
+                .Select(record => record.Index)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToList();
+        }
+
+        // Add Complaint to the index.
         public async Task<string> AddComplaintsAsync(string indexName, List<Complaint> complaints)
         {
             try
@@ -65,7 +79,6 @@ namespace ComplaintAnalyzer
                 {
                     throw new Exception("Some or all documents failed to index.");
                 }
-
                 return "Bulk complaints indexed successfully.";
             }
             catch (Exception ex)
@@ -74,6 +87,7 @@ namespace ComplaintAnalyzer
             }
         }
 
+        // Search complaint in the index based on keyword.
         public async Task<List<Complaint>> SearchAsync(string indexName, string keyword, string? status = null, string? category = null)
         {
             var mustQueries = new List<Func<QueryContainerDescriptor<Complaint>, QueryContainer>>
@@ -94,11 +108,12 @@ namespace ComplaintAnalyzer
             );
 
             if (!response.IsValid)
-                return new List<Complaint>(); // or throw/log
+                return new List<Complaint>(); 
 
             return response.Documents.ToList();
         }
 
+        // Get All Complaints in the index.
         public async Task<List<Complaint>> GetAllComplaintsAsync(string indexName, int pageNumber, int pageSize)
         {
             var exists = await _client.Indices.ExistsAsync(indexName);
@@ -119,6 +134,7 @@ namespace ComplaintAnalyzer
             return response.Documents.ToList();
         }
 
+        // Samrt seach based on wildcard and Fuzziness.
         public async Task<List<ComplaintSearchResult>> SmartSearchAsync(string indexName, string keyword, string? status, string? category, int pageNumber, int pageSize)
         {
             var exists = await _client.Indices.ExistsAsync(indexName);

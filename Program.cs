@@ -1,5 +1,10 @@
+using Complaint_Analyzer_using_ES.Cache;
+using Complaint_Analyzer_using_ES.ICache;
+using Complaint_Analyzer_using_ES.IServices;
+using Complaint_Analyzer_using_ES.Services;
 using ComplaintAnalyzer;
 using Nest;
+using StackExchange.Redis;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,9 +37,14 @@ builder.Services.AddSingleton<IElasticClient>(sp =>
         .DefaultIndex("complaints");
     return new ElasticClient(settings);
 });
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection")));
 
 // Register ES service with interface
 builder.Services.AddScoped<IElasticSearchService, ElasticSearchService>();
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+builder.Services.AddScoped<IElasticSearchCache, ElasticSearchCache>();
+
 
 // Add controllers
 builder.Services.AddControllers();

@@ -1,4 +1,5 @@
 ﻿using Complaint_Analyzer_using_ES.Helpers;
+using Complaint_Analyzer_using_ES.ICache;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,10 +8,12 @@ namespace ComplaintAnalyzer
     public class ComplaintController : Controller
     {
         private readonly IElasticSearchService _elasticService;
+        private readonly IElasticSearchCache _cache;
 
-        public ComplaintController(IElasticSearchService elasticService)
+        public ComplaintController(IElasticSearchService elasticService, IElasticSearchCache cache)
         {
             _elasticService = elasticService;
+            _cache = cache;
         }
         /// <summary>
         /// Creates a new Elasticsearch index with the given name.
@@ -38,6 +41,23 @@ namespace ComplaintAnalyzer
             }
         }
 
+        /// <summary>
+        /// Get all Elasticsearch index names.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("all-indexes")]
+        public async Task<IActionResult> GetAllIndexes()
+        {
+            try
+            {
+                var indexNames = await _elasticService.GetAllIndexNamesAsync();
+                return Ok(indexNames);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error retrieving index names", details = ex.Message });
+            }
+        }
 
         /// <summary>
         /// Adds multiple complaints to the specified index.
@@ -51,6 +71,7 @@ namespace ComplaintAnalyzer
             try
             {
                 var result = await _elasticService.AddComplaintsAsync(indexName, complaints);
+                _cache.InvalidateComplaintCache(indexName);
                 return Ok(result);
             }
             catch (InvalidOperationException ex)
@@ -82,7 +103,7 @@ namespace ComplaintAnalyzer
         {
             try
             {
-                var result = await _elasticService.GetAllComplaintsAsync(indexName, pageNumber, pageSize);
+                var result = await _cache.ComplaintsAsync(indexName, pageNumber, pageSize);
                 return Ok(result);
             }
             catch (InvalidOperationException ex)

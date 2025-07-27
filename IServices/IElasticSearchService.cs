@@ -7,7 +7,8 @@
         Task<List<Complaint>> SearchAsync(string keyword, string indexName, string? status, string? category);
         Task<List<Complaint>> GetAllComplaintsAsync(string indexName, int pageNumber, int pageSize);
         Task<List<ComplaintSearchResult>> SmartSearchAsync(string indexName, string keyword, string? status, string? category, int pageNumber, int pageSize);
+        Task<List<string>> GetAllIndexNamesAsync();
 
-        // Task<List<Complaint>> AdvancedSearchAsync(string keyword, string indexName, string? status, string? category, DateTime? fromDate, DateTime? toDate);
+
     }
 }

@@ -1,9 +1,10 @@
-﻿using StackExchange.Redis;
+﻿using Complaint_Analyzer_using_ES.IServices;
+using StackExchange.Redis;
 using System.Text.Json;
 
 namespace Complaint_Analyzer_using_ES.Services
 {
-    public class RedisCacheService
+    public class RedisCacheService : IRedisCacheService
     {
         private readonly IDatabase _db;
 
@@ -23,6 +24,11 @@ namespace Complaint_Analyzer_using_ES.Services
             var value = await _db.StringGetAsync(key);
             return value.HasValue ? JsonSerializer.Deserialize<T>(value) : default;
         }
+
+        public async Task RemoveAsync(string key)
+        {
+            await _db.KeyDeleteAsync(key);
         }
     }
+}
 
